@@ -1,6 +1,9 @@
 FROM ccarney16/pterodactyl-panel:latest
 
-# Set environment variables
+# Set working directory
+WORKDIR /var/www/html
+
+# Set environment variables (external Redis/MySQL)
 ENV DB_HOST=turntable.proxy.rlwy.net \
     DB_PORT=37810 \
     DB_DATABASE=railway \
@@ -17,12 +20,17 @@ ENV DB_HOST=turntable.proxy.rlwy.net \
     APP_KEY=base64:7FbTQz8kW1sK0dcmShODKdYg+dummykeyplaceholder== \
     APP_TIMEZONE=Africa/Lagos
 
-# Pre-run setup commands
+# Ensure required directories exist and have correct permissions
+RUN mkdir -p storage/logs bootstrap/cache \
+ && chown -R www-data:www-data storage bootstrap/cache \
+ && chmod -R 775 storage bootstrap/cache
+
+# Run Laravel setup commands
 RUN php artisan migrate --force && \
     php artisan p:user:make \
-      --email=Sakinlolu26@gmail.com \
-      --username=admin \
-      --name="Admin" \
-      --password=Samuel234 \
-      --admin=1 && \
+        --email=Sakinlolu26@gmail.com \
+        --username=admin \
+        --name="Admin" \
+        --password=Samuel234 \
+        --admin=1 && \
     php artisan queue:restart
