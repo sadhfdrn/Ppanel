@@ -4,20 +4,34 @@
 # This script runs automatically when the container starts
 
 echo "Starting Pterodactyl Panel setup..."
+echo "Database Host: $DB_HOST"
+echo "Database Port: $DB_PORT"
+echo "Database Name: $DB_DATABASE"
+echo "Database User: $DB_USERNAME"
 
-# Wait for database to be ready
-echo "Waiting for database connection..."
-max_attempts=30
+# Test basic connectivity first
+echo "Testing database connectivity..."
+timeout 30 bash -c "until nc -z $DB_HOST $DB_PORT; do sleep 1; done" && echo "Database port is reachable" || echo "Database port is not reachable"
+
+# Try connecting with mysql client directly
+echo "Testing MySQL connection..."
+mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_DATABASE" -e "SELECT 1;" 2>&1 | head -5
+
+# Wait for database to be ready with Laravel
+echo "Waiting for Laravel database connection..."
+max_attempts=20
 attempt=0
 
-until php /app/artisan migrate:status > /dev/null 2>&1; do
+until timeout 15 php /app/artisan migrate:status > /dev/null 2>&1; do
     attempt=$((attempt + 1))
     if [ $attempt -ge $max_attempts ]; then
         echo "Database connection failed after $max_attempts attempts"
+        echo "Last error:"
+        php /app/artisan migrate:status 2>&1 | tail -10
         exit 1
     fi
-    echo "Database not ready, waiting 10 seconds... (attempt $attempt/$max_attempts)"
-    sleep 10
+    echo "Database not ready, waiting 15 seconds... (attempt $attempt/$max_attempts)"
+    sleep 15
 done
 
 echo "Database connection established!"
