@@ -1,5 +1,13 @@
 FROM ccarney16/pterodactyl-panel:latest
 
+# Install additional debugging tools
+RUN apt-get update && apt-get install -y \
+    netcat-openbsd \
+    mysql-client \
+    telnet \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
 # Set environment variables for external database and Redis
 ENV DB_CONNECTION=mysql
 ENV DB_HOST=turntable.proxy.rlwy.net
@@ -7,6 +15,7 @@ ENV DB_PORT=37810
 ENV DB_DATABASE=railway
 ENV DB_USERNAME=root
 ENV DB_PASSWORD=USLmfFkToqgYxLFOiVSTfNgLMDAnKPkX
+ENV DB_SSL_MODE=DISABLED
 
 # Redis configuration
 ENV REDIS_HOST=yamabiko.proxy.rlwy.net
